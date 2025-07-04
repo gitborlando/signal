@@ -1,0 +1,28 @@
+{
+  "name": "g-signal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "npx husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "esno": "^4.8.0",
+    "husky": "^9.1.7",
+    "pretty-quick": "^4.2.2",
+    "typescript": "^5.8.3"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "jsxBracketSameLine": true,
+    "useTabs": false,
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true,
+    "jsxSingleQuote": true
+  }
+}
