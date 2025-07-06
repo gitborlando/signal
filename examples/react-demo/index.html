@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>G-Signal React Demo</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+      :root {
+        --primary-gradient: linear-gradient(
+          135deg,
+          #6366f1 0%,
+          #8b5cf6 50%,
+          #ec4899 100%
+        );
+        --secondary-gradient: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --error-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+        --bg-primary: #f8fafc;
+        --bg-secondary: #f1f5f9;
+        --bg-tertiary: #e2e8f0;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(0, 0, 0, 0.1);
+        --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+        --border-radius: 6px;
+        --border-radius-sm: 4px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: var(--bg-primary);
+        background-image:
+          radial-gradient(
+            circle at 20% 80%,
+            rgba(99, 102, 241, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(236, 72, 153, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 40%,
+            rgba(14, 165, 233, 0.1) 0%,
+            transparent 50%
+          );
+        min-height: 100vh;
+        color: var(--text-primary);
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        /* background: var(--glass-bg); */
+        /* backdrop-filter: blur(20px); */
+        /* border: 1px solid var(--glass-border); */
+        /* border-radius: var(--border-radius); */
+        /* box-shadow: var(--glass-shadow); */
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-size: 3.5rem;
+        font-weight: 700;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+        letter-spacing: -0.02em;
+      }
+
+      h1::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: var(--primary-gradient);
+        border-radius: 2px;
+      }
+
+      .section {
+        margin-bottom: 2rem;
+        /* padding: 1rem; */
+        /* background: rgba(255, 255, 255, 0.9); */
+        backdrop-filter: blur(30px);
+        /* border: 1px solid rgba(0, 0, 0, 0.1); */
+        border-radius: var(--border-radius);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* .section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary-gradient);
+      } */
+
+      .section h2 {
+        color: var(--text-primary);
+        margin-top: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+
+      .controls h4 {
+        margin: 0;
+        color: var(--text-secondary);
+        font-weight: 500;
+        width: 100%;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        background: #6366f1;
+        color: white;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: var(--transition);
+        box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+        font-size: 0.9rem;
+        height: 2.5rem;
+        box-sizing: border-box;
+      }
+
+      button:hover {
+        background: #5855eb;
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
+      }
+
+      /* 为特定按钮添加特殊样式 */
+      .success-btn {
+        background: #10b981;
+      }
+
+      .warning-btn {
+        background: #f59e0b;
+      }
+
+      .error-btn {
+        background: #ef4444;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: 0 1px 2px rgba(99, 102, 241, 0.2);
+      }
+
+      input {
+        /* padding: 0.5rem 1rem; */
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: var(--border-radius-sm);
+        font-size: 0.9rem;
+        font-family: inherit;
+        background: white;
+        color: var(--text-primary);
+        transition: var(--transition);
+        height: 2.5rem;
+        box-sizing: border-box;
+        display: inline-block;
+      }
+
+      input::placeholder {
+        color: var(--text-muted);
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+      }
+
+      .display {
+        background: #f8fafc;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        border-radius: var(--border-radius-sm);
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 1rem;
+        color: var(--text-primary);
+        /* margin-top: 1rem; */
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-left: 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .status.valid {
+        background: #dcfce7;
+        color: #16a34a;
+        border-color: #16a34a;
+      }
+
+      .status.invalid {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #dc2626;
+      }
+
+      .todo-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 0.5rem;
+        transition: var(--transition);
+      }
+
+      .todo-item:hover {
+        background: #f8fafc;
+      }
+
+      .todo-item.completed {
+        opacity: 0.6;
+        text-decoration: line-through;
+      }
+
+      .todo-item input[type='checkbox'] {
+        width: 1.25rem;
+        height: 1.25rem;
+        accent-color: #6366f1;
+        border-radius: 4px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .card {
+        background: white;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary-gradient);
+      }
+
+      /* 不同类型卡片的颜色主题 */
+      .card.basic-card::before {
+        background: #6366f1;
+      }
+
+      .card.advanced-card::before {
+        background: #0ea5e9;
+      }
+
+      .card.complex-card::before {
+        background: #10b981;
+      }
+
+      .card.guide-card::before {
+        background: #f59e0b;
+      }
+      */ .card:hover {
+        border-color: rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .card h3 {
+        margin-top: 0;
+        color: var(--text-primary);
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .macro-info {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f0f9ff;
+        border: 1px solid #6366f1;
+        border-radius: var(--border-radius-sm);
+        position: relative;
+      }
+
+      /* .macro-info::before {
+        content: '🪄';
+        position: absolute;
+        top: -8px;
+        left: 1rem;
+        background: var(--primary-gradient);
+        padding: 0.5rem;
+        border-radius: 50%;
+        font-size: 1rem;
+      } */
+
+      .macro-info p {
+        margin: 0 0 1rem 0;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .macro-info code {
+        background: #f1f5f9;
+        color: #6366f1;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.875rem;
+        border: 1px solid #cbd5e1;
+        margin-block: 0.5rem;
+        display: inline-block;
+      }
+
+      /* 语法对比表格样式 */
+      .syntax-comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .comparison-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .comparison-section h4 {
+        margin: 0 0 1.5rem 0;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .feature-list li {
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
+
+      .feature-list li strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .feature-list li code {
+        background: #f1f5f9;
+        color: #6366f1;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.875rem;
+        border: 1px solid #cbd5e1;
+      }
+
+      .comparison-table {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+      }
+
+      .comparison-table h4 {
+        margin: 0 0 1.5rem 0;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .comparison-table table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .comparison-table th {
+        background: #f0f9ff;
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .comparison-table td {
+        color: var(--text-secondary);
+        vertical-align: top;
+      }
+
+      .comparison-table code {
+        background: #f1f5f9;
+        color: #6366f1;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        border: 1px solid #cbd5e1;
+        white-space: nowrap;
+      }
+
+      /* 插件指南样式 */
+      .plugin-guide {
+        display: grid;
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .step {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+
+      /* .step::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--secondary-gradient);
+      } */
+
+      .step h4 {
+        margin: 0 0 1rem 0;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .step pre {
+        background: #f8fafc;
+        color: var(--text-primary);
+        padding: 1.5rem;
+        border-radius: var(--border-radius-sm);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+        margin: 1rem 0;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .step pre code {
+        background: none;
+        color: inherit;
+        padding: 0;
+        border: none;
+        font-size: inherit;
+      }
+
+      /* 特殊效果 */
+      .glow-effect {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .glow-effect::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        animation: shimmer 3s infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      /* 浮动动画 */
+      .float-animation {
+        animation: float 6s ease-in-out infinite;
+      }
+
+      /* @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      } */
+
+      /* 脉冲动画 */
+      .pulse-animation {
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      /* @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      } */
+
+      /* 响应式设计 */
+      @media (max-width: 1024px) {
+        .syntax-comparison {
+          grid-template-columns: 1fr;
+        }
+
+        .container {
+          padding: 2rem;
+        }
+
+        h1 {
+          font-size: 2.5rem;
+        }
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        .container {
+          padding: 1.5rem;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .section h2 {
+          font-size: 1.5rem;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .controls h4 {
+          text-align: center;
+        }
+
+        button {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .comparison-table {
+          font-size: 0.8rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+          padding: 0.75rem 0.5rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .card {
+          padding: 1.5rem;
+        }
+
+        .step {
+          padding: 1.5rem;
+        }
+
+        .step pre {
+          font-size: 0.8rem;
+        }
+
+        .macro-info {
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

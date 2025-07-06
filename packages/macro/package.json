@@ -1,0 +1,42 @@
+{
+  "name": "@g-signal/macro",
+  "version": "1.0.0",
+  "description": "信号系统的宏转换工具",
+  "module": "dist/lib/index.mjs",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/lib/index.mjs",
+      "types": "./dist/lib/index.d.ts"
+    },
+    "./macro": {
+      "types": "./dist/macro.d.ts"
+    }
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --watch"
+  },
+  "keywords": [
+    "signal",
+    "macro",
+    "ast",
+    "transform",
+    "compiler",
+    "vite",
+    "plugin"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

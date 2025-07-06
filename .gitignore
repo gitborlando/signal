@@ -1,2 +1,36 @@
+# Node.js
 node_modules
 dist
+
+# 构建输出
+dist/
+*/dist/
+**/dist/
+
+
+
+# 类型定义文件
+*.d.ts
+!src/**/*.d.ts
+
+# 构建缓存
+*.tsbuildinfo
+
+# 编辑器
+.vscode/
+.idea/
+
+# 日志文件
+*.log
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# macOS
+.DS_Store
+
+# 合并后的类型定义文件
+g-signal.d.ts
+g-signal-public.d.ts

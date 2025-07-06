@@ -1,0 +1,42 @@
+{
+  "name": "@g-signal/react",
+  "version": "1.0.0",
+  "description": "React集成的信号系统",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --watch"
+  },
+  "keywords": [
+    "signal",
+    "react",
+    "hooks",
+    "state-management"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "g-signal": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
