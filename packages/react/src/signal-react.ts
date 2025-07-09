@@ -36,7 +36,11 @@ export function useSignal<T extends any>(init?: T): Signal<T> {
  * @param value - 信号的当前值
  * @param forceUpdate - 强制组件重新渲染的函数
  */
-export type ICallback<T> = (value: T, forceUpdate: () => void) => any
+export type UseHookSignalCallback<T> = (
+  value: T,
+  oldValue: T,
+  forceUpdate: () => void,
+) => any
 
 /**
  * 订阅信号并获取当前值（基础版本）
@@ -93,7 +97,7 @@ export function useHookSignal<T>(...args: [Signal<T>, HookOption]): T
  * }
  * ```
  */
-export function useHookSignal<T>(...args: [Signal<T>, ICallback<T>]): T
+export function useHookSignal<T>(...args: [Signal<T>, UseHookSignalCallback<T>]): T
 /**
  * 订阅信号并自定义处理逻辑（完整版本）
  * @template T - 信号值的类型
@@ -121,13 +125,15 @@ export function useHookSignal<T>(...args: [Signal<T>, ICallback<T>]): T
  * }
  * ```
  */
-export function useHookSignal<T>(...args: [Signal<T>, HookOption, ICallback<T>]): T
+export function useHookSignal<T>(
+  ...args: [Signal<T>, HookOption, UseHookSignalCallback<T>]
+): T
 export function useHookSignal<T>(
   ...args:
     | [Signal<T>]
     | [Signal<T>, HookOption]
-    | [Signal<T>, ICallback<T>]
-    | [Signal<T>, HookOption, ICallback<T>]
+    | [Signal<T>, UseHookSignalCallback<T>]
+    | [Signal<T>, HookOption, UseHookSignalCallback<T>]
 ) {
   const [signal, option, callback] = iife(() => {
     if (args.length === 1) {
@@ -135,11 +141,11 @@ export function useHookSignal<T>(
     }
     if (args.length === 2) {
       if (typeof args[1] === 'function') {
-        return [args[0], {}, args[1] as ICallback<T>]
+        return [args[0], {}, args[1] as UseHookSignalCallback<T>]
       }
       return [args[0], args[1] as HookOption, null]
     }
-    return [args[0], args[1] as HookOption, args[2] as ICallback<T>]
+    return [args[0], args[1] as HookOption, args[2] as UseHookSignalCallback<T>]
   })
 
   const [_, setState] = useState({})
@@ -147,8 +153,8 @@ export function useHookSignal<T>(
 
   useEffect(() => {
     if (callback) {
-      return signal.hook(option as HookOption, (value) => {
-        callback(value, forceUpdate)
+      return signal.hook(option as HookOption, (value, oldValue) => {
+        callback(value, oldValue, forceUpdate)
       })
     }
     return signal.hook(option, forceUpdate)

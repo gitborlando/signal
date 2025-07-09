@@ -5,4 +5,4 @@ export { useHookSignal, useSignal } from './signal-react'
 export type { HookOption, Signal } from 'g-signal'
 
 // 导出 React 特有类型
-export type { ICallback } from './signal-react'
+export type { UseHookSignalCallback as ICallback } from './signal-react'
