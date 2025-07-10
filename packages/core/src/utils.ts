@@ -1,9 +1,17 @@
+import { Signal } from './signal'
+
 export function iife<T>(fn: () => T): T {
   return fn()
 }
 
 export function nanoid(): string {
   return Math.random().toString(36).slice(2)
+}
+
+const signalIdCache = createCache<Signal<any>, string>()
+
+export function getSignalId(signal: Signal<any>) {
+  return signalIdCache.getSet(signal, () => nanoid())
 }
 
 export function createCache<K, V>() {
@@ -26,4 +34,3 @@ export function createCache<K, V>() {
     clear: () => map.clear(),
   }
 }
-// test change

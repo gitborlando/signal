@@ -1,8 +1,5 @@
 import type { Hook, HookOption, INoopFunc, MergeSignalOption } from './types'
-import { createCache, iife, nanoid } from './utils'
-
-// 重新导出类型
-export type { Hook, HookOption, INoopFunc, MergeSignalOption }
+import { createCache, getSignalId, iife } from './utils'
 
 /**
  * 响应式信号类
@@ -24,6 +21,22 @@ export type { Hook, HookOption, INoopFunc, MergeSignalOption }
  *
  * // 取消监听
  * unsubscribe()
+ *
+ * // 派生信号
+ * const doubled = derive(count, (value) => value * 2)
+ * const isEven = derive(count, (value) => value % 2 === 0)
+ *
+ * // 多信号派生
+ * const firstName = createSignal('张')
+ * const lastName = createSignal('三')
+ * const fullName = derive(firstName, lastName, (first, last) => `${first}${last}`)
+ *
+ * // 批量处理 + 派生信号
+ * batchSignal(firstName, lastName, () => {
+ *   firstName.dispatch('李')
+ *   lastName.dispatch('四')
+ *   // fullName 只会计算一次，避免中间状态
+ * })
  * ```
  */
 export class Signal<T extends any> {
@@ -174,8 +187,8 @@ export class Signal<T extends any> {
       this.value = value
     }
 
-    if (signalBatchMap.get(this)?.[0]) {
-      return signalBatchMap.set(this, [true, args])
+    if (batchedSignalMap.get(this)?.[0]) {
+      return batchedSignalMap.set(this, [true, args])
     }
 
     this.#hooks.forEach((hook) => hook(this.value, this.#oldValue, args))
@@ -188,6 +201,14 @@ export class Signal<T extends any> {
   removeAll() {
     this.#hooks = []
     this.#optionCache.clear()
+  }
+
+  /**
+   * 内部方法：直接触发所有 hooks（用于批量处理）
+   * @internal
+   */
+  _flushHooks(args?: any) {
+    this.#hooks.forEach((hook) => hook(this.value, this.#oldValue, args))
   }
 
   #unHook(hook: Hook<T>) {
@@ -256,26 +277,6 @@ export class Signal<T extends any> {
 export function createSignal<T extends any>(value?: T) {
   return new Signal<T>(value)
 }
-
-const signalIdCache = createCache<Signal<any>, string>()
-
-/**
- * 获取信号的唯一标识符
- * @param signal - 信号实例
- * @returns 唯一标识符
- *
- * @example
- * ```typescript
- * const signal = createSignal(0)
- * const id = getSignalId(signal)
- * console.log('信号ID:', id)
- * ```
- */
-export function getSignalId(signal: Signal<any>) {
-  return signalIdCache.getSet(signal, () => nanoid())
-}
-
-// MergeSignalOption 已从 types.ts 导入
 
 const mergeSignalCache = createCache<string, Signal<any>>()
 
@@ -376,7 +377,7 @@ export function mergeSignal(
   })
 }
 
-const signalBatchMap = createCache<Signal<any>, [boolean, any]>()
+const batchedSignalMap = createCache<Signal<any>, [boolean, any]>()
 
 /**
  * 批量处理信号（函数重载 - 返回延迟函数）
@@ -430,12 +431,12 @@ export function batchSignal(...args: Signal<any>[] | [...Signal<any>[], INoopFun
 
   signals = [...new Set(signals)]
 
-  signals.forEach((signal) => signalBatchMap.set(signal, [true, undefined]))
+  signals.forEach((signal) => batchedSignalMap.set(signal, [true, undefined]))
 
   const delayDispatch = () => {
     signals.forEach((signal) => {
-      signal.dispatch(signalBatchMap.get(signal)?.[1])
-      signalBatchMap.set(signal, [false, undefined])
+      signal.dispatch(batchedSignalMap.get(signal)?.[1])
+      batchedSignalMap.set(signal, [false, undefined])
     })
   }
 
@@ -443,4 +444,112 @@ export function batchSignal(...args: Signal<any>[] | [...Signal<any>[], INoopFun
 
   callback()
   delayDispatch()
+}
+
+/**
+ * 创建派生信号（函数重载 - 单个信号）
+ * @template T - 源信号值类型
+ * @template R - 派生信号值类型
+ * @param signal - 源信号
+ * @param computeFn - 计算函数
+ * @returns 派生信号
+ *
+ * @example
+ * ```typescript
+ * const count = createSignal(0)
+ * const doubled = derive(count, (value) => value * 2)
+ * const isEven = derive(count, (value) => value % 2 === 0)
+ *
+ * doubled.hook((value) => {
+ *   console.log('双倍值:', value)
+ * })
+ *
+ * count.dispatch(5) // 输出: 双倍值: 10
+ *
+ * // 与批量处理结合使用
+ * const flush = batchSignal(count)
+ * count.dispatch(3) // 不会立即触发 doubled 的计算
+ * count.dispatch(7) // 不会立即触发 doubled 的计算
+ * flush() // 现在才会计算 doubled，输出: 双倍值: 14
+ * ```
+ */
+export function deriveSignal<T, R>(
+  signal: Signal<T>,
+  computeFn: (value: T) => R,
+): Signal<R>
+/**
+ * 创建派生信号（函数重载 - 多个信号）
+ * @template T - 源信号值类型的联合
+ * @template R - 派生信号值类型
+ * @param args - 信号数组 + 计算函数
+ * @returns 派生信号
+ *
+ * 注意：多信号 derive 使用 mergeSignal 实现批量处理，
+ * 只有当所有依赖信号都触发过后才会重新计算。
+ *
+ * @example
+ * ```typescript
+ * const firstName = createSignal('张')
+ * const lastName = createSignal('三')
+ * const fullName = derive(firstName, lastName, (first, last) => `${first}${last}`)
+ *
+ * fullName.hook((value) => {
+ *   console.log('全名:', value)
+ * })
+ *
+ * // 单独更新
+ * firstName.dispatch('李') // 输出: 全名: 李三
+ * lastName.dispatch('四')  // 输出: 全名: 李四
+ *
+ * // 使用 batchSignal 批量更新
+ * batchSignal(firstName, lastName, () => {
+ *   firstName.dispatch('王')
+ *   lastName.dispatch('五')
+ * })
+ * // 只会输出一次: 全名: 王五
+ * ```
+ */
+export function deriveSignal<T extends Signal<any>[], R>(
+  ...args: [
+    ...T,
+    (...values: { [K in keyof T]: T[K] extends Signal<infer U> ? U : never }) => R,
+  ]
+): Signal<R>
+export function deriveSignal<R>(...args: any[]): Signal<R> {
+  const [signals, computeFn] = iife(() => {
+    const lastArg = args[args.length - 1]
+    if (typeof lastArg === 'function') {
+      return [args.slice(0, -1) as Signal<any>[], lastArg]
+    }
+    throw new Error('derive 函数的最后一个参数必须是计算函数')
+  })
+
+  if (signals.length === 0) {
+    throw new Error('derive 函数至少需要一个源信号')
+  }
+
+  // 计算初始值
+  const initialValue =
+    signals.length === 1
+      ? computeFn(signals[0].value)
+      : computeFn(...signals.map((s) => s.value))
+
+  const derivedSignal = createSignal<R>(initialValue)
+
+  if (signals.length === 1) {
+    // 单信号情况，直接监听
+    signals[0].hook(() => {
+      const newValue = computeFn(signals[0].value)
+      derivedSignal.dispatch(newValue)
+    })
+  } else {
+    // 多信号情况，使用 mergeSignal 实现批量处理
+    const mergedSignal = mergeSignal(...signals)
+    mergedSignal.hook(() => {
+      const newValue = computeFn(...signals.map((s) => s.value))
+      derivedSignal.dispatch(newValue)
+    })
+  }
+
+  return derivedSignal
 }
