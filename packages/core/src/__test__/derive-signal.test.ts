@@ -19,7 +19,7 @@ describe('deriveSignal', () => {
       source.dispatch(10)
 
       expect(derived.value).toBe(20)
-      expect(mockHook).toHaveBeenCalledWith(20, 10)
+      expect(mockHook).toHaveBeenCalledWith(20, 10, undefined)
     })
 
     it('应该支持复杂的计算函数', () => {
@@ -147,9 +147,7 @@ describe('deriveSignal', () => {
       expect(final.value).toBe(5) // (1+2) + (1*2) = 3 + 2 = 5
 
       a.dispatch(3)
-      expect(final.value).toBe(15) // (3+2) + (3*2) = 5 + 6 = 11... wait let me recalculate
-      // sum = 3 + 2 = 5, product = 3 * 2 = 6, final = 5 + 6 = 11
-      // Actually let me double check this...
+      expect(final.value).toBe(11) // (3+2) + (3*2) = 5 + 6 = 11
       expect(sum.value).toBe(5)
       expect(product.value).toBe(6)
       expect(final.value).toBe(11)

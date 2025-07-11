@@ -33,8 +33,8 @@ describe('batchSignal', () => {
       // 调用 flush 后应该触发所有 hooks
       flush()
 
-      expect(hook1).toHaveBeenCalledWith(1, 0)
-      expect(hook2).toHaveBeenCalledWith('test', '')
+      expect(hook1).toHaveBeenCalledWith(1, 0, undefined)
+      expect(hook2).toHaveBeenCalledWith('test', '', undefined)
     })
 
     it('应该处理批量模式下的多次更新', () => {
@@ -56,7 +56,7 @@ describe('batchSignal', () => {
 
       // 应该只触发一次，使用最终值
       expect(mockHook).toHaveBeenCalledTimes(1)
-      expect(mockHook).toHaveBeenCalledWith(3, 0)
+      expect(mockHook).toHaveBeenCalledWith(3, 0, undefined)
     })
   })
 
@@ -80,8 +80,8 @@ describe('batchSignal', () => {
       })
 
       // 回调结束后，应该自动刷新所有 hooks
-      expect(hook1).toHaveBeenCalledWith(1, 0)
-      expect(hook2).toHaveBeenCalledWith('test', '')
+      expect(hook1).toHaveBeenCalledWith(1, 0, undefined)
+      expect(hook2).toHaveBeenCalledWith('test', '', undefined)
     })
 
     it('应该支持回调中的复杂操作', () => {
@@ -141,7 +141,7 @@ describe('batchSignal', () => {
       // 批量模式应该已经关闭，后续更新应该立即触发
       signal.dispatch(2)
       expect(mockHook).toHaveBeenCalledTimes(2)
-      expect(mockHook).toHaveBeenLastCalledWith(2, 1)
+      expect(mockHook).toHaveBeenLastCalledWith(2, 1, undefined)
     })
 
     it('应该处理嵌套批量操作', () => {
@@ -165,8 +165,8 @@ describe('batchSignal', () => {
         expect(hook2).not.toHaveBeenCalled()
       })
 
-      expect(hook1).toHaveBeenCalledWith(1, 0)
-      expect(hook2).toHaveBeenCalledWith(2, 0)
+      expect(hook1).toHaveBeenCalledWith(1, 0, undefined)
+      expect(hook2).toHaveBeenCalledWith(2, 0, undefined)
     })
   })
 
@@ -182,7 +182,7 @@ describe('batchSignal', () => {
       signal.dispatch(1, { source: 'test' })
       flush()
 
-      expect(mockHook).toHaveBeenCalledWith(1, 0, { source: 'test' })
+      expect(mockHook).toHaveBeenCalledWith(1, 0, { source: 'test' }, undefined)
     })
   })
 })

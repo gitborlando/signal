@@ -87,7 +87,7 @@ describe('Signal 类', () => {
       signal.dispatch(2)
 
       expect(mockHook).toHaveBeenCalledTimes(1)
-      expect(mockHook).toHaveBeenCalledWith(1, 0)
+      expect(mockHook).toHaveBeenCalledWith(1, 0, undefined)
     })
 
     it('应该支持立即执行且只执行一次', () => {

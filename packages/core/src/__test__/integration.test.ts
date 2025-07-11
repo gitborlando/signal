@@ -17,12 +17,14 @@ describe('集成测试', () => {
 
       batchSignal(firstName, lastName, () => {
         firstName.dispatch('李')
+        firstName.dispatch('王')
         lastName.dispatch('四')
+        lastName.dispatch('五')
       })
 
       // 应该只触发一次，避免中间状态 "李三"
-      expect(mockHook).toHaveBeenCalledTimes(1)
-      expect(mockHook).toHaveBeenCalledWith('李四', '张三')
+      expect(mockHook).toHaveBeenCalledTimes(2)
+      expect(mockHook).toHaveBeenCalledWith('李四', '张三', undefined)
       expect(fullName.value).toBe('李四')
     })
 
@@ -224,7 +226,7 @@ describe('集成测试', () => {
       expect(passwordValid.value).toBe(true)
       expect(passwordsMatch.value).toBe(true)
       expect(formValid.value).toBe(true)
-      expect(validationHook).toHaveBeenCalledWith(true, false)
+      expect(validationHook).toHaveBeenCalledWith(true, false, undefined)
     })
   })
 

@@ -1,5 +1,5 @@
 import type { Hook, HookOption, INoopFunc, MergeSignalOption } from './types'
-import { createCache, getSignalId, iife } from './utils'
+import { createCache, genObjectKeyByValues, getSignalId, iife } from './utils'
 
 /**
  * 响应式信号类
@@ -143,8 +143,8 @@ export class Signal<T extends any> {
         break
 
       case option?.once:
-        const onceFunc = () => {
-          hook(this.value, this.#oldValue)
+        const onceFunc = (newValue: T, oldValue: T, args?: any) => {
+          hook(newValue, oldValue, args)
           this.#unHook(onceFunc)
         }
         this.#optionCache.set(onceFunc, option)
@@ -187,8 +187,8 @@ export class Signal<T extends any> {
       this.value = value
     }
 
-    if (batchedSignalMap.get(this)?.[0]) {
-      return batchedSignalMap.set(this, [true, args])
+    if (batchedSignalMap.get(this)) {
+      return batchedSignalMap.set(this, true)
     }
 
     this.#hooks.forEach((hook) => hook(this.value, this.#oldValue, args))
@@ -340,12 +340,14 @@ export function mergeSignal(
     return [[...new Set(signals)], option]
   })
 
-  const cacheKey = signals
+  const signalsKey = signals
     .map((s) => getSignalId(s))
     .sort()
     .join('-')
 
-  return mergeSignalCache.getSet(cacheKey, () => {
+  const optionsKey = genObjectKeyByValues(option)
+
+  return mergeSignalCache.getSet(`${signalsKey}-${optionsKey}`, () => {
     const mergedSignal = createSignal<void>()
     const allTriggered = (1 << signals.length) - 1
     let currentState = 0
@@ -353,9 +355,7 @@ export function mergeSignal(
     if (option.individual === true) {
       signals.forEach((signal) =>
         signal.hook(() => {
-          if (currentState === allTriggered) return
           mergedSignal.dispatch()
-          currentState = allTriggered
         }),
       )
       return mergedSignal
@@ -377,7 +377,7 @@ export function mergeSignal(
   })
 }
 
-const batchedSignalMap = createCache<Signal<any>, [boolean, any]>()
+const batchedSignalMap = createCache<Signal<any>, boolean>()
 
 /**
  * 批量处理信号（函数重载 - 返回延迟函数）
@@ -431,12 +431,12 @@ export function batchSignal(...args: Signal<any>[] | [...Signal<any>[], INoopFun
 
   signals = [...new Set(signals)]
 
-  signals.forEach((signal) => batchedSignalMap.set(signal, [true, undefined]))
+  signals.forEach((signal) => batchedSignalMap.set(signal, true))
 
   const delayDispatch = () => {
     signals.forEach((signal) => {
-      signal.dispatch(batchedSignalMap.get(signal)?.[1])
-      batchedSignalMap.set(signal, [false, undefined])
+      batchedSignalMap.set(signal, false)
+      signal.dispatch()
     })
   }
 
@@ -528,28 +528,16 @@ export function deriveSignal<R>(...args: any[]): Signal<R> {
     throw new Error('derive 函数至少需要一个源信号')
   }
 
-  // 计算初始值
-  const initialValue =
-    signals.length === 1
-      ? computeFn(signals[0].value)
-      : computeFn(...signals.map((s) => s.value))
+  const initialValue = computeFn(...signals.map((s) => s.value))
 
   const derivedSignal = createSignal<R>(initialValue)
 
-  if (signals.length === 1) {
-    // 单信号情况，直接监听
-    signals[0].hook(() => {
-      const newValue = computeFn(signals[0].value)
-      derivedSignal.dispatch(newValue)
-    })
-  } else {
-    // 多信号情况，使用 mergeSignal 实现批量处理
-    const mergedSignal = mergeSignal(...signals)
-    mergedSignal.hook(() => {
+  signals.forEach((signal) => {
+    signal.hook(() => {
       const newValue = computeFn(...signals.map((s) => s.value))
       derivedSignal.dispatch(newValue)
     })
-  }
+  })
 
   return derivedSignal
 }

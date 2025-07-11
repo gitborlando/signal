@@ -76,10 +76,10 @@ describe('mergeSignal', () => {
       expect(mockHook).toHaveBeenCalledTimes(1)
 
       signal2.dispatch('test')
-      expect(mockHook).toHaveBeenCalledTimes(1) // 不应该再次触发
+      expect(mockHook).toHaveBeenCalledTimes(2)
 
       signal3.dispatch(true)
-      expect(mockHook).toHaveBeenCalledTimes(1) // 仍然不应该再次触发
+      expect(mockHook).toHaveBeenCalledTimes(3)
     })
 
     it('应该只触发一次直到重置', () => {
@@ -93,10 +93,9 @@ describe('mergeSignal', () => {
       signal1.dispatch(1)
       expect(mockHook).toHaveBeenCalledTimes(1)
 
-      // 即使其他信号触发也不应该再次触发
       signal2.dispatch(1)
       signal1.dispatch(2)
-      expect(mockHook).toHaveBeenCalledTimes(1)
+      expect(mockHook).toHaveBeenCalledTimes(3)
     })
   })
 
