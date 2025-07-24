@@ -62,43 +62,6 @@ describe('mergeSignal', () => {
     })
   })
 
-  describe('OR 逻辑（individual: true）', () => {
-    it('应该在任一信号触发时立即触发', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal('')
-      const signal3 = createSignal(false)
-      const merged = mergeSignal(signal1, signal2, signal3, { individual: true })
-      const mockHook = vi.fn()
-
-      merged.hook(mockHook)
-
-      signal1.dispatch(1)
-      expect(mockHook).toHaveBeenCalledTimes(1)
-
-      signal2.dispatch('test')
-      expect(mockHook).toHaveBeenCalledTimes(2)
-
-      signal3.dispatch(true)
-      expect(mockHook).toHaveBeenCalledTimes(3)
-    })
-
-    it('应该只触发一次直到重置', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal(0)
-      const merged = mergeSignal(signal1, signal2, { individual: true })
-      const mockHook = vi.fn()
-
-      merged.hook(mockHook)
-
-      signal1.dispatch(1)
-      expect(mockHook).toHaveBeenCalledTimes(1)
-
-      signal2.dispatch(1)
-      signal1.dispatch(2)
-      expect(mockHook).toHaveBeenCalledTimes(3)
-    })
-  })
-
   describe('缓存机制', () => {
     it('应该缓存相同信号组合的合并信号', () => {
       const signal1 = createSignal(0)
@@ -110,16 +73,6 @@ describe('mergeSignal', () => {
 
       expect(merged1).toBe(merged2)
       expect(merged1).toBe(merged3)
-    })
-
-    it('应该为不同的选项创建不同的合并信号', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal('')
-
-      const merged1 = mergeSignal(signal1, signal2)
-      const merged2 = mergeSignal(signal1, signal2, { individual: true })
-
-      expect(merged1).not.toBe(merged2)
     })
   })
 

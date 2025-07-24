@@ -6,7 +6,6 @@ describe('Signal 类', () => {
     it('应该创建带有初始值的信号', () => {
       const signal = createSignal(42)
       expect(signal.value).toBe(42)
-      expect(signal.newValue).toBe(42)
       expect(signal.oldValue).toBe(42)
     })
 
@@ -19,7 +18,6 @@ describe('Signal 类', () => {
       const signal = createSignal(10)
       signal.value = 20
       expect(signal.value).toBe(20)
-      expect(signal.newValue).toBe(20)
       expect(signal.oldValue).toBe(10)
     })
 
@@ -75,7 +73,7 @@ describe('Signal 类', () => {
 
       signal.hook({ immediately: true }, mockHook)
 
-      expect(mockHook).toHaveBeenCalledWith(42, 42)
+      expect(mockHook).toHaveBeenCalledWith(42, 42, undefined)
     })
 
     it('应该支持只执行一次选项', () => {
@@ -98,7 +96,7 @@ describe('Signal 类', () => {
       signal.dispatch(100)
 
       expect(mockHook).toHaveBeenCalledTimes(1)
-      expect(mockHook).toHaveBeenCalledWith(42, 42)
+      expect(mockHook).toHaveBeenCalledWith(42, 42, undefined)
     })
   })
 

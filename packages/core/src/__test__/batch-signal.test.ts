@@ -2,65 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { batchSignal, createSignal } from '../signal'
 
 describe('batchSignal', () => {
-  describe('延迟执行模式', () => {
-    it.only('应该返回一个延迟执行函数', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal('')
-
-      const flush = batchSignal(signal1, signal2)
-
-      expect(typeof flush).toBe('function')
-    })
-
-    it('应该在批量模式下延迟 hook 执行', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal('')
-      const hook1 = vi.fn()
-      const hook2 = vi.fn()
-
-      signal1.hook(hook1)
-      signal2.hook(hook2)
-
-      const flush = batchSignal(signal1, signal2)
-
-      // 在批量模式下更新不应该立即触发 hooks
-      signal1.dispatch(1)
-      signal2.dispatch('test')
-
-      expect(hook1).not.toHaveBeenCalled()
-      expect(hook2).not.toHaveBeenCalled()
-
-      // 调用 flush 后应该触发所有 hooks
-      flush()
-
-      expect(hook1).toHaveBeenCalledWith(1, 0, undefined)
-      expect(hook2).toHaveBeenCalledWith('test', '', undefined)
-    })
-
-    it('应该处理批量模式下的多次更新', () => {
-      const signal = createSignal(0)
-      const mockHook = vi.fn()
-
-      signal.hook(mockHook)
-
-      const flush = batchSignal(signal)
-
-      // 多次更新
-      signal.dispatch(1)
-      signal.dispatch(2)
-      signal.dispatch(3)
-
-      expect(mockHook).not.toHaveBeenCalled()
-
-      flush()
-
-      // 应该只触发一次，使用最终值
-      expect(mockHook).toHaveBeenCalledTimes(1)
-      expect(mockHook).toHaveBeenCalledWith(3, 0, undefined)
-    })
-  })
-
-  describe('回调执行模式', () => {
+  describe('批量处理模式', () => {
     it('应该在回调中启用批量模式，回调结束后自动刷新', () => {
       const signal1 = createSignal(0)
       const signal2 = createSignal('')
@@ -70,7 +12,7 @@ describe('batchSignal', () => {
       signal1.hook(hook1)
       signal2.hook(hook2)
 
-      batchSignal(signal1, signal2, () => {
+      batchSignal(() => {
         signal1.dispatch(1)
         signal2.dispatch('test')
 
@@ -92,7 +34,7 @@ describe('batchSignal', () => {
       counter.hook(mockHook)
       doubleCounter.hook(mockHook)
 
-      batchSignal(counter, doubleCounter, () => {
+      batchSignal(() => {
         counter.dispatch(5)
         doubleCounter.dispatch(counter.value * 2)
 
@@ -103,23 +45,25 @@ describe('batchSignal', () => {
       expect(counter.value).toBe(5)
       expect(doubleCounter.value).toBe(10)
     })
-  })
 
-  describe('信号去重', () => {
-    it('应该去除重复的信号', () => {
+    it('应该处理批量模式下的多次更新', () => {
       const signal = createSignal(0)
       const mockHook = vi.fn()
 
       signal.hook(mockHook)
 
-      // 传入重复的信号
-      const flush = batchSignal(signal, signal, signal)
+      batchSignal(() => {
+        // 多次更新
+        signal.dispatch(1)
+        signal.dispatch(2)
+        signal.dispatch(3)
 
-      signal.dispatch(1)
-      flush()
+        expect(mockHook).not.toHaveBeenCalled()
+      })
 
-      // 即使传入多次相同信号，也应该只更新一次
+      // 应该只触发一次，使用最终值
       expect(mockHook).toHaveBeenCalledTimes(1)
+      expect(mockHook).toHaveBeenCalledWith(3, 0, undefined)
     })
   })
 
@@ -130,12 +74,11 @@ describe('batchSignal', () => {
 
       signal.hook(mockHook)
 
-      const flush = batchSignal(signal)
+      batchSignal(() => {
+        signal.dispatch(1)
+        expect(mockHook).not.toHaveBeenCalled()
+      })
 
-      signal.dispatch(1)
-      expect(mockHook).not.toHaveBeenCalled()
-
-      flush()
       expect(mockHook).toHaveBeenCalledTimes(1)
 
       // 批量模式应该已经关闭，后续更新应该立即触发
@@ -153,20 +96,20 @@ describe('batchSignal', () => {
       signal1.hook(hook1)
       signal2.hook(hook2)
 
-      batchSignal(signal1, signal2, () => {
+      batchSignal(() => {
         signal1.dispatch(1)
 
         // 嵌套批量操作
-        const innerFlush = batchSignal(signal2)
-        signal2.dispatch(2)
-        innerFlush()
+        batchSignal(() => {
+          signal2.dispatch(2)
+        })
 
         expect(hook1).not.toHaveBeenCalled()
-        expect(hook2).not.toHaveBeenCalled()
+        expect(hook2).not.toHaveBeenCalled() // 嵌套批量操作会立即执行
       })
 
       expect(hook1).toHaveBeenCalledWith(1, 0, undefined)
-      expect(hook2).toHaveBeenCalledWith(2, 0, undefined)
+      expect(hook2).toHaveBeenCalledWith(2, 0, undefined) // 确保只调用了一次
     })
   })
 
@@ -177,12 +120,60 @@ describe('batchSignal', () => {
 
       signal.hook(mockHook)
 
-      const flush = batchSignal(signal)
+      batchSignal(() => {
+        signal.dispatch(1, { source: 'test' })
+      })
 
-      signal.dispatch(1, { source: 'test' })
-      flush()
+      expect(mockHook).toHaveBeenCalledWith(1, 0, { source: 'test' })
+    })
+  })
 
-      expect(mockHook).toHaveBeenCalledWith(1, 0, { source: 'test' }, undefined)
+  describe('多信号批量处理', () => {
+    it('应该批量处理多个信号的更新', () => {
+      const signal1 = createSignal(0)
+      const signal2 = createSignal(0)
+      const signal3 = createSignal(0)
+      const hook1 = vi.fn()
+      const hook2 = vi.fn()
+      const hook3 = vi.fn()
+
+      signal1.hook(hook1)
+      signal2.hook(hook2)
+      signal3.hook(hook3)
+
+      batchSignal(() => {
+        signal1.dispatch(1)
+        signal2.dispatch(2)
+        signal3.dispatch(3)
+
+        // 在批量模式下，所有hooks都不应该立即执行
+        expect(hook1).not.toHaveBeenCalled()
+        expect(hook2).not.toHaveBeenCalled()
+        expect(hook3).not.toHaveBeenCalled()
+      })
+
+      // 回调结束后，所有hooks都应该被触发
+      expect(hook1).toHaveBeenCalledWith(1, 0, undefined)
+      expect(hook2).toHaveBeenCalledWith(2, 0, undefined)
+      expect(hook3).toHaveBeenCalledWith(3, 0, undefined)
+    })
+
+    it('应该正确处理同一信号的多次更新', () => {
+      const signal = createSignal(0)
+      const mockHook = vi.fn()
+
+      signal.hook(mockHook)
+
+      batchSignal(() => {
+        signal.dispatch(1)
+        signal.dispatch(2)
+        signal.dispatch(3)
+        signal.dispatch(4)
+      })
+
+      // 只应该触发一次，使用最终值
+      expect(mockHook).toHaveBeenCalledTimes(1)
+      expect(mockHook).toHaveBeenCalledWith(4, 0, undefined)
     })
   })
 })

@@ -22,7 +22,10 @@ export type INoopFunc = () => void
  * }
  * ```
  */
-export type Hook<T> = (value: T, oldValue: T, args?: any) => void
+export interface Hook<T> {
+  (value: T, oldValue: T, args?: any): void
+  deriving?: boolean
+}
 
 /**
  * Hook 选项配置
@@ -115,20 +118,122 @@ export interface HookOption {
  * }
  * ```
  */
-export interface MergeSignalOption {
+export interface MergeSignalOption {}
+
+/**
+ * 响应式信号接口
+ * @template T - 信号值的类型
+ *
+ * @example
+ * ```typescript
+ * // 基础使用
+ * const count = createSignal(0)
+ *
+ * // 监听变化
+ * const unsubscribe = count.hook((value, oldValue) => {
+ *   console.log(`计数: ${oldValue} → ${value}`)
+ * })
+ *
+ * // 触发更新
+ * count.dispatch(1)
+ * count.dispatch(2)
+ *
+ * // 取消监听
+ * unsubscribe()
+ *
+ * // 派生信号
+ * const doubled = derive(count, (value) => value * 2)
+ * const isEven = derive(count, (value) => value % 2 === 0)
+ *
+ * // 多信号派生
+ * const firstName = createSignal('张')
+ * const lastName = createSignal('三')
+ * const fullName = derive(firstName, lastName, (first, last) => `${first}${last}`)
+ *
+ * // 批量处理 + 派生信号
+ * batchSignal(firstName, lastName, () => {
+ *   firstName.dispatch('李')
+ *   lastName.dispatch('四')
+ *   // fullName 只会计算一次，避免中间状态
+ * })
+ * ```
+ */
+export interface ISignal<T> {
   /**
-   * 是否使用个别模式（OR 逻辑）
-   * - false（默认）：AND 逻辑，所有信号都触发后才触发合并信号
-   * - true：OR 逻辑，任何信号触发都会触发合并信号
-   * @default false
+   * 获取前一个值（旧值）
+   * @readonly
+   */
+  readonly oldValue: T
+
+  /**
+   * 获取或设置当前值
+   */
+  value: T
+
+  /**
+   * 添加 Hook 监听器（简单版本）
+   * @param hook - 回调函数
+   * @returns 取消监听的函数
+   *
    * @example
    * ```typescript
-   * // AND 逻辑：所有信号都触发才触发
-   * const merged1 = mergeSignal(signal1, signal2, signal3)
+   * const unsubscribe = signal.hook((value, oldValue) => {
+   *   console.log(`${oldValue} → ${value}`)
+   * })
    *
-   * // OR 逻辑：任何信号触发都触发
-   * const merged2 = mergeSignal(signal1, signal2, signal3, { individual: true })
+   * // 取消监听
+   * unsubscribe()
    * ```
    */
-  individual?: boolean
+  hook(hook: Hook<T>): () => void
+
+  /**
+   * 添加 Hook 监听器（带选项）
+   * @param option - Hook 选项
+   * @param hook - 回调函数
+   * @returns 取消监听的函数
+   *
+   * @example
+   * ```typescript
+   * const unsubscribe = signal.hook({
+   *   immediately: true,
+   *   once: true
+   * }, (value) => {
+   *   console.log('立即执行且只执行一次:', value)
+   * })
+   * ```
+   */
+  hook(option: HookOption, hook: Hook<T>): () => void
+
+  /**
+   * 派发信号更新
+   * @param value - 新值或更新函数
+   * @param args - 额外参数
+   *
+   * @example
+   * ```typescript
+   * // 直接设置值
+   * signal.dispatch(42)
+   *
+   * // 使用函数更新
+   * signal.dispatch((currentValue) => {
+   *   console.log('当前值:', currentValue)
+   * })
+   *
+   * // 带额外参数
+   * signal.dispatch(42, { source: 'user-input' })
+   * ```
+   */
+  dispatch(value?: T | ((value: T) => void), args?: any): void
+
+  /**
+   * 设置拦截器
+   * @param handle - 拦截处理函数
+   */
+  intercept(handle: (value: T) => T | void): void
+
+  /**
+   * 移除所有监听器
+   */
+  removeAll(): void
 }

@@ -2,18 +2,15 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "jsx": "react-jsx",
     "baseUrl": "."
   },
-  "include": ["packages/*/src/**/*"],
+  "include": ["packages"],
   "exclude": ["node_modules", "dist", "**/*.test.*", "**/*.spec.*"]
 }

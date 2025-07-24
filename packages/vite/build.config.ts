@@ -1,5 +1,5 @@
 import { defineBuildConfig } from 'unbuild'
-import { unbuildConfig } from '../../build.config'
+import { unbuildConfig } from '../../tsup.config'
 
 export default defineBuildConfig({
   ...unbuildConfig,

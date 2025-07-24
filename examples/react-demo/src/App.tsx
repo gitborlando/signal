@@ -1,4 +1,77 @@
 import { useEffect } from 'react'
+import {
+  Link,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+  useLocation,
+} from 'react-router-dom'
+import { ApiGuide } from './api-guide'
+
+// 导航组件
+function Navigation() {
+  const location = useLocation()
+
+  return (
+    <nav className='app-nav'>
+      <div className='nav-container'>
+        <div className='nav-brand'>
+          <span className='brand-icon'>🎯</span>
+          <span className='brand-text'>G-Signal</span>
+        </div>
+        <div className='nav-links'>
+          <Link
+            to='/'
+            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>
+            <span className='nav-icon'>🚀</span>
+            宏语法演示
+          </Link>
+          <Link
+            to='/api-guide'
+            className={`nav-link ${location.pathname === '/api-guide' ? 'active' : ''}`}>
+            <span className='nav-icon'>📖</span>
+            API 指南
+          </Link>
+        </div>
+      </div>
+    </nav>
+  )
+}
+
+// 原有的Demo组件
+function MacroDemo() {
+  return (
+    <div className='App'>
+      <div className='hero'>
+        <h1>
+          <span className='logo'>🎯</span>
+          G-Signal Macro Demo
+        </h1>
+        <p className='subtitle'>现代化的响应式状态管理库 - 宏语法演示</p>
+      </div>
+
+      <div className='demo-grid'>
+        <Counter />
+        <FormValidator />
+        <TodoList />
+        <WatchExample />
+        <AssignmentExample />
+        <ObjectSignalExample />
+        <ArraySignalExample />
+        <ComputedExample />
+        <ConditionalExample />
+        <OptionTypeExample />
+        <AsyncStateExample />
+        <FormValidationExample />
+        <NestedSignalExample />
+        <ResultTypeExample />
+        <AdvancedStateExample />
+        <MacroSyntaxDemo />
+        <VitePluginGuide />
+      </div>
+    </div>
+  )
+}
 
 // 类型定义
 type TodoItem = { id: number; text: string; completed: boolean }
@@ -1648,46 +1721,13 @@ export default defineConfig({
 
 function App() {
   return (
-    <div className='container'>
-      <h1 className='float-animation'>🪄 G-Signal 宏语法演示</h1>
-
-      <MacroSyntaxDemo />
-
-      <div className='section'>
-        <h2>基础宏语法示例</h2>
-        <div className='grid'>
-          <Counter />
-          <FormValidator />
-          <TodoList />
-          <WatchExample />
-        </div>
-      </div>
-
-      <div className='section'>
-        <h2>进阶 API 示例</h2>
-        <div className='grid'>
-          <AssignmentExample />
-          <ObjectSignalExample />
-          <ArraySignalExample />
-          <ComputedExample />
-          <ConditionalExample />
-        </div>
-      </div>
-
-      <div className='section'>
-        <h2>复杂应用场景</h2>
-        <div className='grid'>
-          <OptionTypeExample />
-          <AsyncStateExample />
-          <FormValidationExample />
-          <NestedSignalExample />
-          <ResultTypeExample />
-          <AdvancedStateExample />
-        </div>
-      </div>
-
-      <VitePluginGuide />
-    </div>
+    <Router>
+      <Navigation />
+      <Routes>
+        <Route path='/' element={<MacroDemo />} />
+        <Route path='/api-guide' element={<ApiGuide />} />
+      </Routes>
+    </Router>
   )
 }
 

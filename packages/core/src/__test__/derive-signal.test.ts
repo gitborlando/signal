@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createSignal, deriveSignal } from '../signal'
+import { createSignal, derivedSignal } from '../signal'
 
 describe('deriveSignal', () => {
   describe('单信号派生', () => {
     it('应该创建基于单个信号的派生信号', () => {
       const source = createSignal(5)
-      const derived = deriveSignal(source, (value) => value * 2)
+      const derived = derivedSignal(source, (value) => value * 2)
 
       expect(derived.value).toBe(10)
     })
 
     it('应该在源信号变化时更新', () => {
       const source = createSignal(5)
-      const derived = deriveSignal(source, (value) => value * 2)
+      const derived = derivedSignal(source, (value) => value * 2)
       const mockHook = vi.fn()
 
       derived.hook(mockHook)
@@ -24,7 +24,7 @@ describe('deriveSignal', () => {
 
     it('应该支持复杂的计算函数', () => {
       const source = createSignal(10)
-      const derived = deriveSignal(source, (value) => {
+      const derived = derivedSignal(source, (value) => {
         if (value < 5) return 'small'
         if (value < 10) return 'medium'
         return 'large'
@@ -38,7 +38,7 @@ describe('deriveSignal', () => {
 
     it('应该支持不同类型的转换', () => {
       const numberSignal = createSignal(42)
-      const stringDerived = deriveSignal(numberSignal, (num) => `值是: ${num}`)
+      const stringDerived = derivedSignal(numberSignal, (num) => `值是: ${num}`)
 
       expect(stringDerived.value).toBe('值是: 42')
 
@@ -51,7 +51,7 @@ describe('deriveSignal', () => {
     it('应该创建基于多个信号的派生信号', () => {
       const signal1 = createSignal(3)
       const signal2 = createSignal(4)
-      const derived = deriveSignal(signal1, signal2, (a, b) => a + b)
+      const derived = derivedSignal(signal1, signal2, (a, b) => a + b)
 
       expect(derived.value).toBe(7)
     })
@@ -60,7 +60,12 @@ describe('deriveSignal', () => {
       const signal1 = createSignal(1)
       const signal2 = createSignal(2)
       const signal3 = createSignal(3)
-      const derived = deriveSignal(signal1, signal2, signal3, (a, b, c) => a + b + c)
+      const derived = derivedSignal(
+        signal1,
+        signal2,
+        signal3,
+        (a, b, c) => a + b + c,
+      )
 
       expect(derived.value).toBe(6)
 
@@ -74,7 +79,7 @@ describe('deriveSignal', () => {
     it('应该支持字符串拼接', () => {
       const firstName = createSignal('张')
       const lastName = createSignal('三')
-      const fullName = deriveSignal(
+      const fullName = derivedSignal(
         firstName,
         lastName,
         (first, last) => `${first}${last}`,
@@ -93,7 +98,7 @@ describe('deriveSignal', () => {
       const user = createSignal({ name: '测试', age: 25 })
       const settings = createSignal({ theme: 'dark', lang: 'zh' })
 
-      const profile = deriveSignal(user, settings, (u, s) => ({
+      const profile = derivedSignal(user, settings, (u, s) => ({
         displayName: u.name,
         isAdult: u.age >= 18,
         preferences: s,
@@ -108,18 +113,28 @@ describe('deriveSignal', () => {
   })
 
   describe('错误处理', () => {
-    it('应该在没有信号时抛出错误', () => {
+    it('应该在参数不足时抛出错误', () => {
       expect(() => {
         // @ts-expect-error 故意的错误用法
-        deriveSignal((x) => x * 2)
-      }).toThrow('derive 函数至少需要一个源信号')
+        derivedSignal()
+      }).toThrow('derive 函数需要至少两个参数')
+    })
+
+    it('derive 函数的倒数前N个参数必须是信号', () => {
+      expect(() => {
+        derivedSignal(
+          // @ts-expect-error 故意的错误用法
+          (x: number) => x * 2,
+          (y: number) => y * 2,
+        )
+      }).toThrow('derive 函数的倒数前N个参数必须是信号')
     })
 
     it('应该在没有计算函数时抛出错误', () => {
       const signal = createSignal(5)
       expect(() => {
         // @ts-expect-error 故意的错误用法
-        deriveSignal(signal)
+        derivedSignal(signal, signal)
       }).toThrow('derive 函数的最后一个参数必须是计算函数')
     })
   })
@@ -127,8 +142,8 @@ describe('deriveSignal', () => {
   describe('性能和内存', () => {
     it('应该正确处理派生信号的链式依赖', () => {
       const source = createSignal(2)
-      const doubled = deriveSignal(source, (x) => x * 2)
-      const quadrupled = deriveSignal(doubled, (x) => x * 2)
+      const doubled = derivedSignal(source, (x) => x * 2)
+      const quadrupled = derivedSignal(doubled, (x) => x * 2)
 
       expect(quadrupled.value).toBe(8)
 
@@ -140,9 +155,9 @@ describe('deriveSignal', () => {
     it('应该支持多级派生', () => {
       const a = createSignal(1)
       const b = createSignal(2)
-      const sum = deriveSignal(a, b, (x, y) => x + y)
-      const product = deriveSignal(a, b, (x, y) => x * y)
-      const final = deriveSignal(sum, product, (s, p) => s + p)
+      const sum = derivedSignal(a, b, (x, y) => x + y)
+      const product = derivedSignal(a, b, (x, y) => x * y)
+      const final = derivedSignal(sum, product, (s, p) => s + p)
 
       expect(final.value).toBe(5) // (1+2) + (1*2) = 3 + 2 = 5
 
