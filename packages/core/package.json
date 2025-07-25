@@ -1,7 +1,7 @@
 {
   "name": "g-signal",
   "version": "1.0.0",
-  "description": "核心信号系统",
+  "description": "a reactive signal library for JavaScript/TypeScript that provides fine-grained reactivity with powerful composition patterns.",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -11,28 +11,33 @@
   "type": "module",
   "files": [
     "dist",
-    "src"
+    "src",
+    "readme.md"
   ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "test:coverage": "vitest --coverage"
+    "test:run": "vitest run"
   },
   "keywords": [
     "signal",
     "reactive",
     "state-management"
   ],
-  "author": "",
+  "author": "gitborlando",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitborlando/signal.git"
+  },
+  "funding": "https://github.com/gitborlando/signal",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "peerDependencies": {
-    "react": "^18.0.0"
+  "devDependencies": {
+    "nanoid": ">=5.0.0"
   }
 }

@@ -22,7 +22,7 @@
   "license": "ISC",
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
-    "@gitborlando/utils": "^2.0.0",
+    "@gitborlando/utils": "^3.0.0",
     "@types/node": "^24.0.10",
     "@types/react": "^18.0.0",
     "@vitest/ui": "^3.2.4",

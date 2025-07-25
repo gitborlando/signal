@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
-import { batchSignal, createSignal } from '../signal'
+import { Signal } from '..'
 
 describe('batchSignal', () => {
   describe('批量处理模式', () => {
     it('应该在回调中启用批量模式，回调结束后自动刷新', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal('')
+      const signal1 = Signal.create(0)
+      const signal2 = Signal.create('')
       const hook1 = vi.fn()
       const hook2 = vi.fn()
 
       signal1.hook(hook1)
       signal2.hook(hook2)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         signal1.dispatch(1)
         signal2.dispatch('test')
 
@@ -27,14 +27,14 @@ describe('batchSignal', () => {
     })
 
     it('应该支持回调中的复杂操作', () => {
-      const counter = createSignal(0)
-      const doubleCounter = createSignal(0)
+      const counter = Signal.create(0)
+      const doubleCounter = Signal.create(0)
       const mockHook = vi.fn()
 
       counter.hook(mockHook)
       doubleCounter.hook(mockHook)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         counter.dispatch(5)
         doubleCounter.dispatch(counter.value * 2)
 
@@ -47,12 +47,12 @@ describe('batchSignal', () => {
     })
 
     it('应该处理批量模式下的多次更新', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       signal.hook(mockHook)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         // 多次更新
         signal.dispatch(1)
         signal.dispatch(2)
@@ -69,12 +69,12 @@ describe('batchSignal', () => {
 
   describe('批量模式状态管理', () => {
     it('应该正确恢复批量模式状态', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       signal.hook(mockHook)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         signal.dispatch(1)
         expect(mockHook).not.toHaveBeenCalled()
       })
@@ -88,19 +88,19 @@ describe('batchSignal', () => {
     })
 
     it('应该处理嵌套批量操作', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal(0)
+      const signal1 = Signal.create(0)
+      const signal2 = Signal.create(0)
       const hook1 = vi.fn()
       const hook2 = vi.fn()
 
       signal1.hook(hook1)
       signal2.hook(hook2)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         signal1.dispatch(1)
 
         // 嵌套批量操作
-        batchSignal(() => {
+        Signal.batch(() => {
           signal2.dispatch(2)
         })
 
@@ -115,12 +115,12 @@ describe('batchSignal', () => {
 
   describe('额外参数传递', () => {
     it('应该保持额外参数在批量处理中', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       signal.hook(mockHook)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         signal.dispatch(1, { source: 'test' })
       })
 
@@ -130,9 +130,9 @@ describe('batchSignal', () => {
 
   describe('多信号批量处理', () => {
     it('应该批量处理多个信号的更新', () => {
-      const signal1 = createSignal(0)
-      const signal2 = createSignal(0)
-      const signal3 = createSignal(0)
+      const signal1 = Signal.create(0)
+      const signal2 = Signal.create(0)
+      const signal3 = Signal.create(0)
       const hook1 = vi.fn()
       const hook2 = vi.fn()
       const hook3 = vi.fn()
@@ -141,7 +141,7 @@ describe('batchSignal', () => {
       signal2.hook(hook2)
       signal3.hook(hook3)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         signal1.dispatch(1)
         signal2.dispatch(2)
         signal3.dispatch(3)
@@ -159,12 +159,12 @@ describe('batchSignal', () => {
     })
 
     it('应该正确处理同一信号的多次更新', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       signal.hook(mockHook)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         signal.dispatch(1)
         signal.dispatch(2)
         signal.dispatch(3)

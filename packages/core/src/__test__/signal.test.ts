@@ -1,28 +1,28 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createSignal } from '../signal'
+import { Signal } from '..'
 
 describe('Signal 类', () => {
   describe('基础功能', () => {
     it('应该创建带有初始值的信号', () => {
-      const signal = createSignal(42)
+      const signal = Signal.create(42)
       expect(signal.value).toBe(42)
       expect(signal.oldValue).toBe(42)
     })
 
     it('应该创建不带初始值的信号', () => {
-      const signal = createSignal<number>()
+      const signal = Signal.create<number>()
       expect(signal.value).toBeUndefined()
     })
 
     it('应该更新信号值', () => {
-      const signal = createSignal(10)
+      const signal = Signal.create(10)
       signal.value = 20
       expect(signal.value).toBe(20)
       expect(signal.oldValue).toBe(10)
     })
 
     it('应该支持复杂类型', () => {
-      const signal = createSignal({ name: '测试', count: 0 })
+      const signal = Signal.create({ name: '测试', count: 0 })
       expect(signal.value).toEqual({ name: '测试', count: 0 })
 
       signal.value = { name: '更新', count: 1 }
@@ -32,7 +32,7 @@ describe('Signal 类', () => {
 
   describe('Hook 监听器', () => {
     it('应该添加和触发 hook', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       signal.hook(mockHook)
@@ -42,7 +42,7 @@ describe('Signal 类', () => {
     })
 
     it('应该支持多个 hook', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const hook1 = vi.fn()
       const hook2 = vi.fn()
 
@@ -55,7 +55,7 @@ describe('Signal 类', () => {
     })
 
     it('应该支持取消监听', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       const unsubscribe = signal.hook(mockHook)
@@ -68,7 +68,7 @@ describe('Signal 类', () => {
     })
 
     it('应该支持立即执行选项', () => {
-      const signal = createSignal(42)
+      const signal = Signal.create(42)
       const mockHook = vi.fn()
 
       signal.hook({ immediately: true }, mockHook)
@@ -77,7 +77,7 @@ describe('Signal 类', () => {
     })
 
     it('应该支持只执行一次选项', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       signal.hook({ once: true }, mockHook)
@@ -89,7 +89,7 @@ describe('Signal 类', () => {
     })
 
     it('应该支持立即执行且只执行一次', () => {
-      const signal = createSignal(42)
+      const signal = Signal.create(42)
       const mockHook = vi.fn()
 
       signal.hook({ immediately: true, once: true }, mockHook)
@@ -102,7 +102,7 @@ describe('Signal 类', () => {
 
   describe('Dispatch 方法', () => {
     it('应该使用函数更新值', () => {
-      const signal = createSignal(10)
+      const signal = Signal.create(10)
       const mockFn = vi.fn()
 
       signal.dispatch(mockFn)
@@ -111,7 +111,7 @@ describe('Signal 类', () => {
     })
 
     it('应该传递额外参数给 hook', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const mockHook = vi.fn()
 
       signal.hook(mockHook)
@@ -123,7 +123,7 @@ describe('Signal 类', () => {
 
   describe('拦截器', () => {
     it('应该拦截并修改值', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
 
       signal.intercept((value: number) => value * 2)
       signal.value = 10
@@ -132,7 +132,7 @@ describe('Signal 类', () => {
     })
 
     it('应该支持拦截器返回 void', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
 
       signal.intercept((value: number) => {
         // 拦截但不返回值
@@ -145,7 +145,7 @@ describe('Signal 类', () => {
 
   describe('清理功能', () => {
     it('应该移除所有 hook', () => {
-      const signal = createSignal(0)
+      const signal = Signal.create(0)
       const hook1 = vi.fn()
       const hook2 = vi.fn()
 

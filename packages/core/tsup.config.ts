@@ -7,5 +7,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   treeshake: true,
-  external: ['react'],
+  external: [],
 })

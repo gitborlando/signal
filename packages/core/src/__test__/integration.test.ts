@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { batchSignal, createSignal, derivedSignal, mergeSignal } from '../signal'
+import { Signal } from '..'
 
 describe('集成测试', () => {
   describe('deriveSignal + batchSignal', () => {
     it('应该在批量处理中只计算一次派生信号', () => {
-      const firstName = createSignal('张')
-      const lastName = createSignal('三')
-      const fullName = derivedSignal(
+      const firstName = Signal.create('张')
+      const lastName = Signal.create('三')
+      const fullName = Signal.derive(
         firstName,
         lastName,
         (first, last) => `${first}${last}`,
@@ -15,7 +15,7 @@ describe('集成测试', () => {
 
       fullName.hook(mockHook)
 
-      batchSignal(() => {
+      Signal.batch(() => {
         firstName.dispatch('李')
         firstName.dispatch('王')
         lastName.dispatch('四')
@@ -31,13 +31,13 @@ describe('集成测试', () => {
 
   describe('mergeSignal + deriveSignal', () => {
     it('应该在合并信号触发时重新计算派生信号', () => {
-      const signal1 = createSignal(1)
-      const signal2 = createSignal(2)
-      const signal3 = createSignal(3)
+      const signal1 = Signal.create(1)
+      const signal2 = Signal.create(2)
+      const signal3 = Signal.create(3)
 
-      const merged = mergeSignal(signal1, signal2, signal3)
-      const sum = derivedSignal(signal1, signal2, signal3, (a, b, c) => a + b + c)
-      const derivedFromMerged = derivedSignal(merged, sum, () => sum.value)
+      const merged = Signal.merge(signal1, signal2, signal3)
+      const sum = Signal.derive(signal1, signal2, signal3, (a, b, c) => a + b + c)
+      const derivedFromMerged = Signal.derive(merged, sum, () => sum.value)
 
       const mockHook = vi.fn()
       derivedFromMerged.hook(mockHook)
@@ -58,13 +58,13 @@ describe('集成测试', () => {
   describe('复杂业务场景', () => {
     it('应该支持用户状态管理场景', () => {
       // 模拟用户状态管理
-      const userId = createSignal<number | null>(null)
-      const userName = createSignal('')
-      const userAge = createSignal(0)
-      const isLoggedIn = createSignal(false)
+      const userId = Signal.create<number | null>(null)
+      const userName = Signal.create('')
+      const userAge = Signal.create(0)
+      const isLoggedIn = Signal.create(false)
 
       // 派生信号
-      const userProfile = derivedSignal(
+      const userProfile = Signal.derive(
         userId,
         userName,
         userAge,
@@ -76,7 +76,7 @@ describe('集成测试', () => {
         }),
       )
 
-      const userStatus = derivedSignal(
+      const userStatus = Signal.derive(
         isLoggedIn,
         userProfile,
         (loggedIn, profile) =>
@@ -89,7 +89,7 @@ describe('集成测试', () => {
       userStatus.hook(statusHook)
 
       // 登录流程
-      batchSignal(() => {
+      Signal.batch(() => {
         userId.dispatch(1)
         userName.dispatch('张三')
         userAge.dispatch(25)
@@ -108,31 +108,31 @@ describe('集成测试', () => {
 
     it('应该支持购物车场景', () => {
       // 模拟购物车状态
-      const items = createSignal<
+      const items = Signal.create<
         Array<{ id: number; price: number; quantity: number }>
       >([])
-      const discount = createSignal(0)
-      const tax = createSignal(0.1)
+      const discount = Signal.create(0)
+      const tax = Signal.create(0.1)
 
       // 计算总价
-      const subtotal = derivedSignal(items, (items) =>
+      const subtotal = Signal.derive(items, (items) =>
         items.reduce((sum, item) => sum + item.price * item.quantity, 0),
       )
 
-      const discountAmount = derivedSignal(
+      const discountAmount = Signal.derive(
         subtotal,
         discount,
         (sub, disc) => sub * disc,
       )
 
-      const taxAmount = derivedSignal(
+      const taxAmount = Signal.derive(
         subtotal,
         discountAmount,
         tax,
         (sub, disc, taxRate) => (sub - disc) * taxRate,
       )
 
-      const total = derivedSignal(
+      const total = Signal.derive(
         subtotal,
         discountAmount,
         taxAmount,
@@ -159,23 +159,23 @@ describe('集成测试', () => {
     })
 
     it('应该支持表单验证场景', () => {
-      const email = createSignal('')
-      const password = createSignal('')
-      const confirmPassword = createSignal('')
+      const email = Signal.create('')
+      const password = Signal.create('')
+      const confirmPassword = Signal.create('')
 
-      const emailValid = derivedSignal(email, (email) =>
+      const emailValid = Signal.derive(email, (email) =>
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
       )
 
-      const passwordValid = derivedSignal(password, (pwd) => pwd.length >= 6)
+      const passwordValid = Signal.derive(password, (pwd) => pwd.length >= 6)
 
-      const passwordsMatch = derivedSignal(
+      const passwordsMatch = Signal.derive(
         password,
         confirmPassword,
         (pwd, confirm) => pwd === confirm && pwd.length > 0,
       )
 
-      const formValid = derivedSignal(
+      const formValid = Signal.derive(
         emailValid,
         passwordValid,
         passwordsMatch,
@@ -186,7 +186,7 @@ describe('集成测试', () => {
       formValid.hook(validationHook)
 
       // 填写表单
-      batchSignal(() => {
+      Signal.batch(() => {
         email.dispatch('test@example.com')
         password.dispatch('password123')
         confirmPassword.dispatch('password123')
@@ -202,19 +202,19 @@ describe('集成测试', () => {
 
   describe('性能和内存管理', () => {
     it('应该处理大量信号的复杂依赖', () => {
-      const signals = Array.from({ length: 100 }, (_, i) => createSignal(i))
+      const signals = Array.from({ length: 100 }, (_, i) => Signal.create(i))
 
-      const sum = derivedSignal(...signals, (...values) =>
+      const sum = Signal.derive(...signals, (...values) =>
         values.reduce((acc, val) => acc + val, 0),
       )
 
-      const average = derivedSignal(sum, (total) => total / signals.length)
+      const average = Signal.derive(sum, (total) => total / signals.length)
 
       const mockHook = vi.fn()
       average.hook(mockHook)
 
       // 批量更新所有信号
-      batchSignal(() => {
+      Signal.batch(() => {
         signals.forEach((signal, i) => signal.dispatch(i * 2))
       })
 
@@ -225,8 +225,8 @@ describe('集成测试', () => {
     })
 
     it('应该正确清理内存和事件监听器', () => {
-      const source = createSignal(0)
-      const derived = derivedSignal(source, (x) => x * 2)
+      const source = Signal.create(0)
+      const derived = Signal.derive(source, (x) => x * 2)
       const mockHook = vi.fn()
 
       const unsubscribe = derived.hook(mockHook)
