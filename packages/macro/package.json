@@ -19,7 +19,9 @@
   ],
   "scripts": {
     "build": "unbuild",
-    "dev": "unbuild --watch"
+    "dev": "unbuild --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "keywords": [
     "signal",

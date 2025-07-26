@@ -4,5 +4,6 @@
     "source.organizeImports": "explicit"
   },
   "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
   "cSpell.words": ["esno", "mkdist"]
 }

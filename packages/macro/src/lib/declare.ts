@@ -1,10 +1,10 @@
+import { Is } from '@gitborlando/utils'
 import * as ts from 'typescript'
 import { suffix } from '.'
-import { isNone } from '../utils'
 
-let importAPIName: keyof typeof importMap = 'createSignal'
+let importAPIName: keyof typeof importMap = 'Signal'
 const importMap = {
-  createSignal: 'g-signal',
+  Signal: 'g-signal',
   useSignal: '@g-signal/react',
 } as const
 
@@ -20,10 +20,7 @@ function shouldTransformSignalDeclaration(node: ts.VariableDeclaration): boolean
 
   if (node.initializer && ts.isCallExpression(node.initializer)) {
     const callee = node.initializer.expression
-    if (
-      ts.isIdentifier(callee) &&
-      ['useSignal', 'createSignal'].includes(callee.text)
-    ) {
+    if (ts.isIdentifier(callee) && ['useSignal', 'Signal'].includes(callee.text)) {
       return false
     }
   }
@@ -307,8 +304,10 @@ export function createDeclareTransformer(): ts.TransformerFactory<ts.SourceFile>
   return (context: ts.TransformationContext) => {
     return (sourceFile: ts.SourceFile) => {
       showAddImportStatement = false
+      importAPIName = 'Signal'
 
-      let isInsideReactScope = false
+      let needsSignalImport = false
+      let needsUseSignalImport = false
 
       const visit = (node: ts.Node): ts.Node => {
         if (
@@ -318,14 +317,24 @@ export function createDeclareTransformer(): ts.TransformerFactory<ts.SourceFile>
           showAddImportStatement = true
 
           const isInsideReactScope = checkIsInsideReactScope(node)
+          const currentImportAPIName = isInsideReactScope ? 'useSignal' : 'Signal'
+
+          // 记录需要导入的模块
           if (isInsideReactScope) {
-            importAPIName = 'useSignal'
+            needsUseSignalImport = true
+          } else {
+            needsSignalImport = true
           }
 
           const createSignalCall = ts.factory.createCallExpression(
-            ts.factory.createIdentifier(importAPIName),
+            currentImportAPIName === 'Signal'
+              ? ts.factory.createPropertyAccessExpression(
+                  ts.factory.createIdentifier(currentImportAPIName),
+                  'create',
+                )
+              : ts.factory.createIdentifier(currentImportAPIName),
             undefined,
-            isNone(node.initializer) ? [] : [node.initializer],
+            Is.nullable(node.initializer) ? [] : [node.initializer],
           )
 
           return ts.factory.updateVariableDeclaration(
@@ -340,10 +349,18 @@ export function createDeclareTransformer(): ts.TransformerFactory<ts.SourceFile>
         return ts.visitEachChild(node, visit, context)
       }
 
-      const transformedSourceFile = ts.visitNode(sourceFile, visit) as ts.SourceFile
+      let transformedSourceFile = ts.visitNode(sourceFile, visit) as ts.SourceFile
 
+      // 添加必要的导入语句
       if (showAddImportStatement) {
-        return addImport(transformedSourceFile)
+        if (needsSignalImport) {
+          importAPIName = 'Signal'
+          transformedSourceFile = addImport(transformedSourceFile)
+        }
+        if (needsUseSignalImport) {
+          importAPIName = 'useSignal'
+          transformedSourceFile = addImport(transformedSourceFile)
+        }
       }
 
       return transformedSourceFile

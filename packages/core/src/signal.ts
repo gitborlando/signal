@@ -1,6 +1,15 @@
 import { createCache, iife } from '@gitborlando/utils'
-import type { Hook, HookInternalInfo, HookOption } from './types'
+import type { DeriveSignalCallback, Hook, HookOption } from './types'
 import { getSignalId } from './utils'
+
+/**
+ * 钩子内部信息
+ * Hook internal information
+ */
+export interface HookInternalInfo {
+  deriving: boolean
+  option: HookOption
+}
 
 /**
  * 是否正在派生信号
@@ -50,7 +59,7 @@ const batchedHookArgsMap = new Map<Hook<any>, [any, any, any]>()
  * unsubscribe()
  * ```
  */
-export class Signal<T extends any> {
+export class Signal<T extends any, Args extends any = any> {
   /**
    * 新值（当前值）
    * New value (current value)
@@ -73,7 +82,7 @@ export class Signal<T extends any> {
    * 钩子函数数组
    * Array of hook functions
    */
-  #hooks: Hook<T>[] = []
+  #hooks: Hook<T, Args>[] = []
 
   /**
    * 拦截器函数
@@ -186,7 +195,7 @@ export class Signal<T extends any> {
    * unsubscribe()
    * ```
    */
-  hook(hook: Hook<T>): () => void
+  hook(hook: Hook<T, Args>): () => void
   /**
    * 添加 Hook 监听器（带选项）
    * Add Hook listener (with options)
@@ -205,11 +214,11 @@ export class Signal<T extends any> {
    * })
    * ```
    */
-  hook(option: HookOption, hookCallback: Hook<T>): () => void
-  hook(hookOrOption: Hook<T> | HookOption, hookCallback?: Hook<T>) {
+  hook(option: HookOption, hookCallback: Hook<T, Args>): () => void
+  hook(hookOrOption: Hook<T, Args> | HookOption, hookCallback?: Hook<T, Args>) {
     const [hookFunc, option] = iife(() => {
       let option = {} as HookOption
-      let hookFunc = hookOrOption as Hook<T>
+      let hookFunc = hookOrOption as Hook<T, Args>
       if (typeof hookOrOption === 'function') {
         hookFunc = hookOrOption
       } else {
@@ -219,7 +228,7 @@ export class Signal<T extends any> {
       return [hookFunc, option] as const
     })
 
-    const hook: Hook<T> = (newValue: T, oldValue: T, args?: any) => {
+    const hook: Hook<T, Args> = (newValue: T, oldValue: T, args?: Args) => {
       hookFunc(newValue, oldValue, args)
     }
 
@@ -239,7 +248,7 @@ export class Signal<T extends any> {
         break
 
       case option?.once:
-        const onceFunc = (newValue: T, oldValue: T, args?: any) => {
+        const onceFunc = (newValue: T, oldValue: T, args?: Args) => {
           hook(newValue, oldValue, args)
           this.#unHook(onceFunc)
         }
@@ -281,7 +290,7 @@ export class Signal<T extends any> {
    * signal.dispatch(42, { source: 'user-input' })
    * ```
    */
-  dispatch = (value?: T | ((value: T) => void), args?: any) => {
+  dispatch = (value?: T | ((value: T) => void), args?: Args) => {
     if (typeof value === 'function') {
       ;(value as Function)(this.value)
     } else if (value !== undefined) {
@@ -357,7 +366,7 @@ export class Signal<T extends any> {
    * @private
    * @param targetHook - 要移除的钩子 / Hook to remove
    */
-  #unHook(targetHook: Hook<T>) {
+  #unHook(targetHook: Hook<T, Args>) {
     this.#hooks = this.#hooks.filter((hook) => hook !== targetHook)
     this.#hookInternalInfoMap.delete(targetHook)
   }
@@ -372,9 +381,9 @@ export class Signal<T extends any> {
    * @private
    */
   #reHierarchy() {
-    const beforeAllHooks: Hook<T>[] = []
-    const afterAllHooks: Hook<T>[] = []
-    const normalHooks: Hook<T>[] = []
+    const beforeAllHooks: Hook<any>[] = []
+    const afterAllHooks: Hook<any>[] = []
+    const normalHooks: Hook<any>[] = []
 
     this.#hooks.forEach((hook) => {
       const option = this.#getHookInternalInfo(hook).option
@@ -430,8 +439,8 @@ export class Signal<T extends any> {
    * count.dispatch(1)
    * ```
    */
-  static create<T extends any>(value?: T): Signal<T> {
-    return new Signal<T>(value)
+  static create<T extends any, Args extends any = any>(value?: T): Signal<T, Args> {
+    return new Signal<T, Args>(value)
   }
 
   /**
@@ -458,14 +467,7 @@ export class Signal<T extends any> {
    * ```
    */
   static derive<Signals extends readonly Signal<any>[], Result>(
-    ...args: [
-      ...Signals,
-      (
-        ...values: {
-          [K in keyof Signals]: Signals[K] extends Signal<infer V> ? V : never
-        }
-      ) => Result,
-    ]
+    ...args: [...Signals, DeriveSignalCallback<Signals, Result>]
   ): Signal<Result> {
     if (args.length < 2) {
       throw new Error(

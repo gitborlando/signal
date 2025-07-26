@@ -6,6 +6,8 @@
  * Contains complete JSDoc comments for the best IDE experience
  */
 
+import { Signal } from './signal'
+
 /**
  * Hook 回调函数类型
  * Hook callback function type
@@ -22,8 +24,8 @@
  * }
  * ```
  */
-export interface Hook<T> {
-  (value: T, oldValue: T, args?: any): void
+export interface Hook<T, Args extends any = any> {
+  (value: T, oldValue: T, args?: Args): void
 }
 
 /**
@@ -134,11 +136,13 @@ export interface HookOption {
  * ```
  */
 
-/**
- * 钩子内部信息
- * Hook internal information
- */
-export interface HookInternalInfo {
-  deriving: boolean
-  option: HookOption
+export interface DeriveSignalCallback<
+  Signals extends readonly Signal<any>[],
+  Result,
+> {
+  (
+    ...values: {
+      [K in keyof Signals]: Signals[K] extends Signal<infer V> ? V : never
+    }
+  ): Result
 }

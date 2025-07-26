@@ -2,11 +2,9 @@
   "name": "@g-signal/react",
   "version": "1.0.0",
   "description": "React集成的信号系统",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
@@ -15,8 +13,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild",
-    "dev": "unbuild --watch"
+    "build": "tsup",
+    "dev": "tsup --watch"
   },
   "keywords": [
     "signal",
@@ -26,15 +24,22 @@
   ],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "g-signal": "workspace:*"
-  },
   "peerDependencies": {
+    "g-signal": "workspace:*",
     "react": "^18.0.0"
   },
   "devDependencies": {
-    "@types/react": "^18.0.0"
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^18.0.0",
+    "@types/testing-library__react": "^10.2.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitborlando/signal.git"
+  },
+  "funding": "https://github.com/gitborlando/signal",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"

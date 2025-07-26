@@ -3,8 +3,13 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
-    include: ['src/**/*.{test,spec}.{js,ts}', 'tests/**/*.{test,spec}.{js,ts}'],
+    environment: 'jsdom',
+    include: [
+      'src/**/*.{test,spec}.{js,ts,tsx}',
+      'tests/**/*.{test,spec}.{js,ts,tsx}',
+      'packages/*/src/__test__/**/*.{test,spec}.{js,ts,tsx}',
+      'packages/*/src/**/*.{test,spec}.{js,ts,tsx}',
+    ],
     exclude: ['node_modules', 'dist', 'build'],
     coverage: {
       provider: 'v8',

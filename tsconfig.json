@@ -9,8 +9,8 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
+    "jsx": "react-jsx",
     "baseUrl": "."
   },
-  "include": ["packages"],
-  "exclude": ["node_modules", "dist", "**/*.test.*", "**/*.spec.*"]
+  "include": ["packages"]
 }
