@@ -23,12 +23,14 @@ import { useRef, useSyncExternalStore } from 'react'
  * }
  * ```
  */
-export function useSignal<T extends any>(init?: T): Signal<T> {
+export function useSignal<T extends any>(init?: T, shouldHook?: boolean): Signal<T> {
   const signal = useRef<Signal<T> | null>(null)
   if (!signal.current) {
     signal.current = Signal.create(init)
   }
-  useHookSignal(signal.current!)
+  if (shouldHook) {
+    useHookSignal(signal.current!)
+  }
   return signal.current!
 }
 
@@ -189,7 +191,6 @@ export function useDerivedSignal<Signals extends Signal<any>[], Result>(
   if (!signal.current) {
     signal.current = Signal.derive(...signals, callback)
   }
-  useHookSignal(signal.current!)
   return signal.current!
 }
 
@@ -212,6 +213,5 @@ export function useMergeSignal<Signals extends Signal<any>[]>(
   if (!signal.current) {
     signal.current = Signal.merge(...signals)
   }
-  useHookSignal(signal.current!)
   return signal.current!
 }

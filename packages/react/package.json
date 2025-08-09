@@ -1,6 +1,6 @@
 {
   "name": "@g-signal/react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "React集成的信号系统",
   "exports": {
     ".": {
@@ -15,7 +15,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test:ui": "vitest --ui"
   },
   "keywords": [
     "signal",

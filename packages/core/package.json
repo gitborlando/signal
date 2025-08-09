@@ -1,5 +1,5 @@
 {
-  "name": "g-signal",
+  "name": "@g-signal/core",
   "version": "1.0.0",
   "description": "a reactive signal library for JavaScript/TypeScript that provides fine-grained reactivity with powerful composition patterns.",
   "exports": {
