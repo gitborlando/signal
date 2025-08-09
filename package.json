@@ -9,8 +9,7 @@
     "build": "pnpm -r run build",
     "dev": "pnpm -r run dev",
     "clean": "rm -rf dist node_modules && pnpm -r exec rm -rf dist node_modules",
-    "publish:dry": "node scripts/publish.js --dry-run",
-    "publish:all": "node scripts/publish.js"
+    "changeset": "changeset"
   },
   "keywords": [
     "signal",
