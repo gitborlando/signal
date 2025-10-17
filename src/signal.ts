@@ -1,4 +1,4 @@
-import { createCache, iife, miniId } from '@gitborlando/utils'
+import { createCache, iife, objectKey } from '@gitborlando/utils'
 import type { Hook, HookOption } from './types'
 
 /**
@@ -417,7 +417,7 @@ export class Signal<T extends any> {
     signals = [...new Set(signals)] as Signal<any>[]
 
     const signalsKey = signals
-      .map((s) => getSignalId(s))
+      .map((s) => objectKey(s))
       .sort()
       .join('-')
 
@@ -481,10 +481,4 @@ export class Signal<T extends any> {
       delayDispatch()
     }
   }
-}
-
-const signalIdCache = createCache<Signal<any>, string>()
-
-export function getSignalId(signal: Signal<any>) {
-  return signalIdCache.getSet(signal, () => miniId())
 }
