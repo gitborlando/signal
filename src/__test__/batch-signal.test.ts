@@ -65,6 +65,42 @@ describe('batchSignal', () => {
       expect(mockHook).toHaveBeenCalledTimes(1)
       expect(mockHook).toHaveBeenCalledWith(3, 0)
     })
+
+    it('should reset batch old value between separate batches', () => {
+      const signal = Signal.create(0)
+      const mockHook = vi.fn()
+
+      signal.hook(mockHook)
+
+      Signal.batch(() => {
+        signal.dispatch(1)
+      })
+
+      Signal.batch(() => {
+        signal.dispatch(2)
+      })
+
+      expect(mockHook).toHaveBeenNthCalledWith(1, 1, 0)
+      expect(mockHook).toHaveBeenNthCalledWith(2, 2, 1)
+    })
+
+    it('should handle undefined as the batch start old value', () => {
+      const signal = Signal.create<number | undefined>()
+      const mockHook = vi.fn()
+
+      signal.hook(mockHook)
+
+      Signal.batch(() => {
+        signal.dispatch(1)
+      })
+
+      Signal.batch(() => {
+        signal.dispatch(2)
+      })
+
+      expect(mockHook).toHaveBeenNthCalledWith(1, 1, undefined)
+      expect(mockHook).toHaveBeenNthCalledWith(2, 2, 1)
+    })
   })
 
   describe('批量模式状态管理', () => {
@@ -110,6 +146,27 @@ describe('batchSignal', () => {
 
       expect(hook1).toHaveBeenCalledWith(1, 0)
       expect(hook2).toHaveBeenCalledWith(2, 0) // 确保只调用了一次
+    })
+
+    it('should restore batch state when the callback throws', () => {
+      const signal = Signal.create(0)
+      const mockHook = vi.fn()
+
+      signal.hook(mockHook)
+
+      expect(() => {
+        Signal.batch(() => {
+          signal.dispatch(1)
+          throw new Error('boom')
+        })
+      }).toThrow('boom')
+
+      expect(mockHook).toHaveBeenCalledWith(1, 0)
+
+      signal.dispatch(2)
+
+      expect(mockHook).toHaveBeenLastCalledWith(2, 1)
+      expect(mockHook).toHaveBeenCalledTimes(2)
     })
   })
 

@@ -88,6 +88,17 @@ describe('Signal 类', () => {
       expect(mockHook).toHaveBeenCalledWith(1, 0)
     })
 
+    it('should support unsubscribing a once hook before dispatch', () => {
+      const signal = Signal.create(0)
+      const mockHook = vi.fn()
+
+      const unsubscribe = signal.hook({ once: true }, mockHook)
+      unsubscribe()
+      signal.dispatch(1)
+
+      expect(mockHook).not.toHaveBeenCalled()
+    })
+
     it('应该支持立即执行且只执行一次', () => {
       const signal = Signal.create(42)
       const mockHook = vi.fn()
@@ -97,6 +108,18 @@ describe('Signal 类', () => {
 
       expect(mockHook).toHaveBeenCalledTimes(1)
       expect(mockHook).toHaveBeenCalledWith(42, 42)
+    })
+
+    it('should preserve ordering options for once hooks', () => {
+      const signal = Signal.create(0)
+      const calls: string[] = []
+
+      signal.hook(() => calls.push('normal'))
+      signal.hook({ once: true, beforeAll: true }, () => calls.push('once'))
+
+      signal.dispatch(1)
+
+      expect(calls).toEqual(['once', 'normal'])
     })
   })
 

@@ -20,6 +20,12 @@ let batchingLayerCount = 0
 const batchedHookArgsMap = new Map<Hook<any>, [any, any]>()
 
 /**
+ * 批处理中发生变更的信号集合
+ * Signals changed during batch processing
+ */
+const batchedSignals = new Set<Signal<any>>()
+
+/**
  * 响应式信号类
  * Reactive signal class
  *
@@ -61,6 +67,12 @@ export class Signal<T extends any> {
    * Old value at the start of batch processing
    */
   #batchStartOldValue?: T
+
+  /**
+   * 是否已保存批处理开始时的旧值
+   * Whether the old value at the start of batch processing has been saved
+   */
+  #hasBatchStartOldValue = false
 
   /**
    * 钩子函数数组
@@ -146,10 +158,12 @@ export class Signal<T extends any> {
     // In batch mode, don't update oldValue
     if (!batchingLayerCount) {
       this.#oldValue = this.#newValue
-    } else if (this.#batchStartOldValue === undefined) {
+    } else if (!this.#hasBatchStartOldValue) {
       // 批量操作开始时保存oldValue
       // Save oldValue at the start of batch operation
       this.#batchStartOldValue = this.#newValue
+      this.#hasBatchStartOldValue = true
+      batchedSignals.add(this)
     }
 
     this.#newValue = value
@@ -209,7 +223,7 @@ export class Signal<T extends any> {
       hookFunc(newValue, oldValue)
     }
 
-    this.#hookOptionMap.set(hook, option)
+    let storedHook: Hook<T> | undefined
 
     switch (true) {
       case option?.immediately && option?.once:
@@ -218,7 +232,8 @@ export class Signal<T extends any> {
 
       case option?.immediately:
         hook(this.value, this.#oldValue)
-        this.#hooks.push(hook)
+        storedHook = hook
+        this.#hooks.push(storedHook)
         break
 
       case option?.once:
@@ -226,17 +241,27 @@ export class Signal<T extends any> {
           hook(newValue, oldValue)
           this.#unHook(onceFunc)
         }
-        this.#hooks.push(onceFunc)
+        storedHook = onceFunc
+        this.#hooks.push(storedHook)
         break
 
       default:
-        this.#hooks.push(hook)
+        storedHook = hook
+        this.#hooks.push(storedHook)
         break
+    }
+
+    if (storedHook) {
+      this.#hookOptionMap.set(storedHook, option)
     }
 
     this.#reHierarchy()
 
-    return () => this.#unHook(hook)
+    return () => {
+      if (storedHook) {
+        this.#unHook(storedHook)
+      }
+    }
   }
 
   /**
@@ -267,10 +292,9 @@ export class Signal<T extends any> {
     }
 
     if (batchingLayerCount > 0) {
-      const batchOldValue =
-        this.#batchStartOldValue !== undefined
-          ? this.#batchStartOldValue
-          : this.#oldValue
+      const batchOldValue = this.#hasBatchStartOldValue
+        ? this.#batchStartOldValue
+        : this.#oldValue
 
       this.#hooks.forEach((hook) => {
         batchedHookArgsMap.set(hook, [this.value, batchOldValue])
@@ -310,6 +334,17 @@ export class Signal<T extends any> {
    */
   #unHook(targetHook: Hook<T>) {
     this.#hooks = this.#hooks.filter((hook) => hook !== targetHook)
+    this.#hookOptionMap.delete(targetHook)
+    batchedHookArgsMap.delete(targetHook)
+  }
+
+  /**
+   * 清理批处理状态
+   * Clear batch processing state
+   */
+  #clearBatchState() {
+    this.#batchStartOldValue = undefined
+    this.#hasBatchStartOldValue = false
   }
 
   /**
@@ -467,18 +502,22 @@ export class Signal<T extends any> {
   static batch(callback: () => void): void {
     batchingLayerCount++
 
-    callback()
+    try {
+      callback()
+    } finally {
+      if (batchingLayerCount > 0) {
+        batchingLayerCount--
+      }
 
-    const delayDispatch = () => {
-      batchedHookArgsMap.forEach((args, hook) => hook(args[0], args[1]))
-      batchedHookArgsMap.clear()
-    }
-
-    if (batchingLayerCount > 0) {
-      batchingLayerCount--
-    }
-    if (batchingLayerCount === 0) {
-      delayDispatch()
+      if (batchingLayerCount === 0) {
+        try {
+          batchedHookArgsMap.forEach((args, hook) => hook(args[0], args[1]))
+        } finally {
+          batchedHookArgsMap.clear()
+          batchedSignals.forEach((signal) => signal.#clearBatchState())
+          batchedSignals.clear()
+        }
+      }
     }
   }
 }
