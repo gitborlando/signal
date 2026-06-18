@@ -6,6 +6,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react.js",
+      "types": "./dist/react.d.ts"
     }
   },
   "files": [
@@ -35,6 +39,9 @@
     "url": "https://github.com/gitborlando/signal.git"
   },
   "funding": "https://github.com/gitborlando/signal",
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
@@ -52,9 +59,14 @@
     "@changesets/cli": "^2.29.5",
     "@gitborlando/utils": "^4.5.0",
     "@types/node": "^24.0.15",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@vitest/ui": "^3.2.4",
     "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
     "pretty-quick": "^4.2.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "tsup": "^8.5.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
